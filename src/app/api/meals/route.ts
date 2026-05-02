@@ -1,54 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { handleApi } from '@/lib/api';
+import { validateString, validateQuantity } from '@/lib/validate';
+import type { Meal } from '@/types/db';
 
-// GET all meals for user
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const meals = db.prepare(`
-    SELECT m.*, 
-      COUNT(mi.id) as item_count
-    FROM meals m
-    LEFT JOIN meal_items mi ON mi.meal_id = m.id
-    WHERE m.user_id = ?
-    GROUP BY m.id
-    ORDER BY m.created_at DESC
-  `).all(session.id);
+    const meals = db.prepare(`
+      SELECT m.*, COUNT(mi.id) as item_count
+      FROM meals m
+      LEFT JOIN meal_items mi ON mi.meal_id = m.id
+      WHERE m.user_id = ?
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `).all(session.id) as Meal[];
 
-  return NextResponse.json({ meals });
+    return NextResponse.json({ meals });
+  });
 }
 
-// POST create a new meal
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { name, items } = await req.json();
-  // items: [{ food_id, quantity_grams }]
+    const body = await req.json();
+    const name = validateString(body.name, 'Meal name');
 
-  if (!name) return NextResponse.json({ error: 'Meal name is required' }, { status: 400 });
-  if (!items || items.length === 0) return NextResponse.json({ error: 'Meal must have at least one item' }, { status: 400 });
-
-  const createMeal = db.transaction(() => {
-    const result = db.prepare(
-      'INSERT INTO meals (user_id, name) VALUES (?, ?)'
-    ).run(session.id, name);
-
-    const mealId = result.lastInsertRowid;
-
-    const insertItem = db.prepare(
-      'INSERT INTO meal_items (meal_id, food_id, quantity_grams) VALUES (?, ?, ?)'
-    );
-
-    for (const item of items) {
-      insertItem.run(mealId, item.food_id, item.quantity_grams);
+    if (!Array.isArray(body.items) || body.items.length === 0) {
+      return NextResponse.json({ error: 'Meal must have at least one item' }, { status: 400 });
     }
 
-    return mealId;
-  });
+    const mealId = db.transaction(() => {
+      const result = db.prepare(
+        'INSERT INTO meals (user_id, name) VALUES (?, ?)'
+      ).run(session.id, name);
 
-  const mealId = createMeal();
-  return NextResponse.json({ success: true, id: mealId }, { status: 201 });
+      const mealId = result.lastInsertRowid;
+      const insertItem = db.prepare(
+        'INSERT INTO meal_items (meal_id, food_id, quantity_grams) VALUES (?, ?, ?)'
+      );
+
+      for (const item of body.items) {
+        const quantity = validateQuantity(item.quantity_grams);
+        insertItem.run(mealId, Number(item.food_id), quantity);
+      }
+
+      return mealId;
+    })();
+
+    return NextResponse.json({ success: true, id: mealId }, { status: 201 });
+  });
 }

@@ -80,15 +80,15 @@ export function seedFoods() {
     VALUES (@name, @calories, @protein, @carbs, @fat, @category, 0)
   `);
 
-  const insertMany = db.transaction((foods: typeof foods) => {
-    for (const food of foods) insert.run(food);
+  const insertMany = db.transaction((items: typeof foods) => {
+    for (const food of items) insert.run(food);
   });
 
   insertMany(foods);
   console.log(`Seeded ${foods.length} foods successfully.`);
 }
 
-export function runMigrations() {
+export function ensureDB() {
   initDB();
   seedFoods();
   console.log('Database ready.');

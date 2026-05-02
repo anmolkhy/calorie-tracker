@@ -1,73 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { handleApi } from '@/lib/api';
+import { validateString, validateQuantity } from '@/lib/validate';
+import type { Meal, MealItem } from '@/types/db';
 
-// GET single meal with all items
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+type RouteParams = { params: Promise<{ id: string }> };
 
-  const meal = db.prepare('SELECT * FROM meals WHERE id = ? AND user_id = ?')
-    .get(Number(params.id), session.id);
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+    const { id } = await params;
+    const mealId = Number(id);
 
-  const items = db.prepare(`
-    SELECT mi.*, f.name, f.calories_per_100g, f.protein_per_100g, 
-           f.carbs_per_100g, f.fat_per_100g
-    FROM meal_items mi
-    JOIN foods f ON f.id = mi.food_id
-    WHERE mi.meal_id = ?
-  `).all(Number(params.id));
+    const meal = db.prepare(
+      'SELECT * FROM meals WHERE id = ? AND user_id = ?'
+    ).get(mealId, session.id) as Meal | undefined;
 
-  return NextResponse.json({ meal, items });
-}
+    if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
 
-// PUT update meal name and items
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const items = db.prepare(`
+      SELECT mi.*, f.name, f.calories_per_100g, f.protein_per_100g,
+             f.carbs_per_100g, f.fat_per_100g
+      FROM meal_items mi
+      JOIN foods f ON f.id = mi.food_id
+      WHERE mi.meal_id = ?
+    `).all(mealId) as MealItem[];
 
-  const meal = db.prepare('SELECT * FROM meals WHERE id = ? AND user_id = ?')
-    .get(Number(params.id), session.id);
-
-  if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
-
-  const { name, items } = await req.json();
-
-  const updateMeal = db.transaction(() => {
-    if (name) {
-      db.prepare('UPDATE meals SET name = ? WHERE id = ?').run(name, Number(params.id));
-    }
-
-    if (items && items.length > 0) {
-      // Delete existing items and replace
-      db.prepare('DELETE FROM meal_items WHERE meal_id = ?').run(Number(params.id));
-
-      const insertItem = db.prepare(
-        'INSERT INTO meal_items (meal_id, food_id, quantity_grams) VALUES (?, ?, ?)'
-      );
-      for (const item of items) {
-        insertItem.run(Number(params.id), item.food_id, item.quantity_grams);
-      }
-    }
+    return NextResponse.json({ meal, items });
   });
-
-  updateMeal();
-  return NextResponse.json({ success: true });
 }
 
-// DELETE meal
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function PUT(req: NextRequest, { params }: RouteParams) {
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const meal = db.prepare('SELECT * FROM meals WHERE id = ? AND user_id = ?')
-    .get(Number(params.id), session.id);
+    const { id } = await params;
+    const mealId = Number(id);
 
-  if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+    const meal = db.prepare(
+      'SELECT * FROM meals WHERE id = ? AND user_id = ?'
+    ).get(mealId, session.id) as Meal | undefined;
 
-  db.prepare('DELETE FROM meals WHERE id = ?').run(Number(params.id));
+    if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
 
-  return NextResponse.json({ success: true });
+    const body = await req.json();
+
+    db.transaction(() => {
+      if (body.name) {
+        const name = validateString(body.name, 'Meal name');
+        db.prepare('UPDATE meals SET name = ? WHERE id = ?').run(name, mealId);
+      }
+
+      if (Array.isArray(body.items) && body.items.length > 0) {
+        db.prepare('DELETE FROM meal_items WHERE meal_id = ?').run(mealId);
+        const insertItem = db.prepare(
+          'INSERT INTO meal_items (meal_id, food_id, quantity_grams) VALUES (?, ?, ?)'
+        );
+        for (const item of body.items) {
+          const quantity = validateQuantity(item.quantity_grams);
+          insertItem.run(mealId, Number(item.food_id), quantity);
+        }
+      }
+    })();
+
+    return NextResponse.json({ success: true });
+  });
+}
+
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await params;
+    const mealId = Number(id);
+
+    const meal = db.prepare(
+      'SELECT * FROM meals WHERE id = ? AND user_id = ?'
+    ).get(mealId, session.id) as Meal | undefined;
+
+    if (!meal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+
+    db.prepare('DELETE FROM meals WHERE id = ?').run(mealId);
+    return NextResponse.json({ success: true });
+  });
 }

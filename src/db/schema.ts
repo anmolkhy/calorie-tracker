@@ -1,19 +1,29 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-
-const DB_PATH = path.join(process.cwd(), 'data', 'calorie-tracker.db');
-
-// Ensure data directory exists
 import fs from 'fs';
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-const db = Database(DB_PATH);
+// Global singleton to survive Next.js hot reload in dev
+const globalForDb = global as unknown as { db: Database.Database };
 
-// Enable WAL mode for better performance
-db.pragma('journal_mode = WAL');
+function createDb(): Database.Database {
+  const dataDir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
 
-export function initDB() {
+  const db = new Database(path.join(dataDir, 'calorie-tracker.db'));
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON'); // enforce FK constraints
+  return db;
+}
+
+const db = globalForDb.db ?? createDb();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.db = db;
+}
+
+export function initDB(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +90,7 @@ export function initDB() {
       quantity_grams REAL NOT NULL,
       meal_id INTEGER,
       logged_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (daily_log_id) REFERENCES daily_logs(id),
+      FOREIGN KEY (daily_log_id) REFERENCES daily_logs(id) ON DELETE CASCADE,
       FOREIGN KEY (food_id) REFERENCES foods(id),
       FOREIGN KEY (meal_id) REFERENCES meals(id)
     );

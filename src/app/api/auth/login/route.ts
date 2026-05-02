@@ -2,48 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import db from '@/lib/db';
 import { createToken, COOKIE_NAME } from '@/lib/auth';
+import { handleApi } from '@/lib/api';
+import { validateString } from '@/lib/validate';
+import type { User } from '@/types/db';
 
 export async function POST(req: NextRequest) {
-  try {
-    const { email, password } = await req.json();
+  return handleApi(async () => {
+    const body = await req.json();
+    const email = validateString(body.email, 'Email');
+    const password = validateString(body.password, 'Password');
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
-    }
-
-    const user = db
-      .prepare('SELECT * FROM users WHERE email = ?')
-      .get(email) as {
-      id: number;
-      name: string;
-      email: string;
-      password_hash: string;
-    } | undefined;
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined;
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
-
     if (!valid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = await createToken({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    });
+    const token = await createToken({ id: user.id, email: user.email, name: user.name });
 
     const response = NextResponse.json({
       success: true,
@@ -59,8 +39,5 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+  });
 }

@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { handleApi } from '@/lib/api';
 
-// DELETE a single log entry
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+type RouteParams = { params: Promise<{ id: string }> };
 
-  // Verify entry belongs to this user
-  const entry = db.prepare(`
-    SELECT le.id FROM log_entries le
-    JOIN daily_logs dl ON dl.id = le.daily_log_id
-    WHERE le.id = ? AND dl.user_id = ?
-  `).get(Number(params.id), session.id);
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    const { id } = await params;
+    const entryId = Number(id);
 
-  db.prepare('DELETE FROM log_entries WHERE id = ?').run(Number(params.id));
+    const entry = db.prepare(`
+      SELECT le.id FROM log_entries le
+      JOIN daily_logs dl ON dl.id = le.daily_log_id
+      WHERE le.id = ? AND dl.user_id = ?
+    `).get(entryId, session.id);
 
-  return NextResponse.json({ success: true });
+    if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+
+    db.prepare('DELETE FROM log_entries WHERE id = ?').run(entryId);
+    return NextResponse.json({ success: true });
+  });
 }
