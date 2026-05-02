@@ -14,34 +14,37 @@ export default function MacroBar({ label, consumed, goal, color, unit = 'g' }: P
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between items-baseline">
-        <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{label}</span>
-        <div className="flex items-baseline gap-1">
-          <span className="mono text-sm font-medium" style={{ color }}>
-            {consumed.toFixed(1)}{unit}
-          </span>
-          <span className="text-xs text-[var(--text-dim)]">/ {goal}{unit}</span>
-        </div>
+        <span
+          className="text-xs uppercase tracking-wider"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {label}
+        </span>
+        <span className="mono text-xs font-medium" style={{ color }}>
+          {consumed.toFixed(1)}{unit}
+        </span>
       </div>
 
-      {/* Track */}
-      <div className="h-1 bg-[var(--surface-2)] rounded-full overflow-hidden">
+      <div className="macro-track">
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="macro-fill"
           style={{
             width: `${percent}%`,
-            backgroundColor: over ? 'var(--red)' : color,
+            background: over ? 'var(--red)' : color,
           }}
         />
       </div>
 
       <div className="flex justify-between">
-        <span className="text-xs text-[var(--text-dim)]">
+        <span className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
           {over
-            ? <span className="text-[var(--red)]">+{(consumed - goal).toFixed(1)}{unit} over</span>
+            ? <span style={{ color: 'var(--red)' }}>+{(consumed - goal).toFixed(1)}{unit} over</span>
             : <span>{remaining.toFixed(1)}{unit} left</span>
           }
         </span>
-        <span className="mono text-xs text-[var(--text-dim)]">{Math.round(percent)}%</span>
+        <span className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
+          {Math.round(percent)}%
+        </span>
       </div>
     </div>
   );
