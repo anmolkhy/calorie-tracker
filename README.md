@@ -1,145 +1,123 @@
-# Calorie Tracker
+# Macros — Personal Calorie & Macro Tracker
 
-A local macro tracking app built with Next.js 16, React 19, TypeScript, Tailwind CSS, and SQLite.
+A fast, minimal, and accurate calorie and macro tracker built for personal daily use. Built on the philosophy that tracking should be based on **raw ingredient weights** with **verified nutrition data** — not crowdsourced guesses or prepared dish estimates.
 
-## Overview
+## Philosophy
 
-This project is a calorie and macro tracker with:
+Most calorie tracking apps fail because:
+- Their food databases have thousands of duplicate entries with unreliable numbers
+- They log prepared dishes with assumed recipes instead of raw ingredients
+- They're cluttered with social features, upsells, and noise
 
-- Email/password authentication
-- JWT-based session cookie storage
-- Daily food logging with macro preview
-- Custom food creation and search
-- Meal definitions and meal quick logging
-- Goal tracking for calories, protein, carbs, and fat
-- Local SQLite persistence in `data/calorie-tracker.db`
+This app tracks **raw ingredients at their weighed quantities**. If you cook dal, you log the raw dal, oil, and onions separately — each at their actual weight. The math is honest.
 
-## Key Features
+## Features
 
-- User registration and login
-- Protected dashboard for daily food tracking
-- Food search and custom food management
-- Meal creation, editing, and quick logging
-- Daily macro totals and remaining goals
-- Backend API routes under `src/app/api`
-- Pre-seeded foods for common ingredients
+- **Daily food logging** — search, select, enter grams, done in 3 taps
+- **Fixed meal templates** — create reusable meals (e.g. "Oats Breakfast") and log everything in one click
+- **Live macro calculation** — calories, protein, carbs, fat consumed vs. remaining
+- **7-day history** — bar chart and daily breakdown
+- **Curated food database** — seeded with verified macros from product labels and USDA/IFCT data
+- **Custom foods** — add any food with your own label data
+- **Daily goals** — set and update calorie and macro targets anytime
+- **Multi-user** — each user has their own data, goals, and meal templates
+- **Mobile-friendly** — designed for daily use on phone
 
 ## Tech Stack
 
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- SQLite via `better-sqlite3`
-- JWT authentication with `jose`
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Database | SQLite via `better-sqlite3` |
+| Auth | JWT in httpOnly cookies (`jose`) |
+| Styling | Tailwind CSS v4 + CSS variables |
+| Language | TypeScript |
+| Runtime | Node.js 22 |
 
 ## Project Structure
 
-- `src/app` — app router pages and API routes
-- `src/app/(auth)` — authentication pages (`/login`, `/register`)
-- `src/app/(app)` — authenticated dashboard and UI
-- `src/app/api` — API route handlers for auth, foods, meals, goals, and logs
-- `src/components` — reusable UI and feature components
-- `src/lib` — auth helpers, API wrapper, DB initialization, and utilities
-- `src/db` — SQLite schema and seed data
-- `data` — generated local SQLite database file
+src/
+├── app/
+│   ├── (auth)/          # Login, register pages
+│   ├── (app)/           # Protected pages: dashboard, history, meals, foods, settings
+│   └── api/             # API routes: auth, foods, meals, log, goals
+├── components/
+│   ├── ui/              # Button, Input, MacroBar
+│   ├── log/             # FoodSearch, LogEntryRow
+│   └── meals/           # MealQuickLog
+├── db/
+│   ├── schema.ts        # SQLite schema + singleton
+│   └── seed.ts          # Verified food database seed
+├── lib/
+│   ├── auth.ts          # JWT helpers
+│   ├── api.ts           # handleApi error wrapper
+│   ├── calculate.ts     # Pure macro calculation engine
+│   ├── db.ts            # DB initialization
+│   └── validate.ts      # Input validation
+└── types/
+└── db.ts            # TypeScript types for all DB entities
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js 20+
-- npm (or yarn/pnpm)
+- Git
 
-### Install
+### Installation
 
 ```bash
+git clone https://github.com/anmolkhy/calorie-tracker.git
+cd calorie-tracker
 npm install
 ```
 
-### Development
+### Environment Setup
+
+Create `.env.local` in the project root:
+JWT_SECRET=your-secret-key-minimum-32-characters-long
+
+### Run Locally
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000` in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Build
+The database is created automatically on first run at `data/calorie-tracker.db`. The food database is seeded on first startup.
 
-```bash
-npm run build
-```
-
-### Start
+### Run on Local Network (mobile access)
 
 ```bash
-npm start
+npm run dev -- --hostname 0.0.0.0
 ```
 
-### Lint
+Access from your phone at `http://YOUR_PC_IP:3000`.
 
-```bash
-npm run lint
-```
+## Data & Privacy
 
-## Environment
+- All data is stored locally in a SQLite file at `data/calorie-tracker.db`
+- Passwords are hashed with bcrypt
+- Sessions use JWT stored in httpOnly cookies
+- No data leaves your machine
 
-The app supports a JWT secret for signing auth tokens. In production, set:
+## Food Database
 
-```bash
-export JWT_SECRET="your-strong-secret"
-```
+The seed database contains ~55 foods with macros sourced from:
+- **Product labels** — Atom Whey, ID Fresh Paneer, Licious Chicken, Quaker Oats, Superyou Wafers
+- **USDA FoodData Central** — nuts, seeds, fruits, vegetables
+- **IFCT (National Institute of Nutrition, India)** — Indian staples: dal, rice, atta, paneer
 
-If `JWT_SECRET` is not provided, the app falls back to a default secret, so make sure to configure it before deploying.
+All values are per 100g raw weight. Custom foods can be added anytime via the Foods tab.
 
-## Database
+## Roadmap
 
-- The SQLite database file is created at `data/calorie-tracker.db`.
-- Schema includes users, goals, foods, meals, daily logs, meal items, and log entries.
-- `src/db/seed.ts` seeds an initial food catalog on first run.
+- [ ] PWA — install on phone home screen
+- [ ] Deploy to Vercel + Turso (cloud SQLite)
+- [ ] Water intake tracking
+- [ ] Weekly macro averages
+- [ ] Export data as CSV
 
-## API Routes
+## License
 
-Key endpoints include:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET /api/goals`
-- `POST /api/goals`
-- `GET /api/foods`
-- `POST /api/foods`
-- `PUT /api/foods/:id`
-- `DELETE /api/foods/:id`
-- `GET /api/meals`
-- `POST /api/meals`
-- `GET /api/meals/:id`
-- `PUT /api/meals/:id`
-- `DELETE /api/meals/:id`
-- `GET /api/log`
-- `POST /api/log`
-- `DELETE /api/log/entry/:id`
-- `GET /api/log/meal/:id`
-- `GET /api/log/week`
-
-## Notes
-
-- Auth state is managed in `src/lib/AuthContext.tsx`.
-- Session cookies are stored under `ct_session`.
-- The app uses a singleton SQLite connection in development to survive hot reloads.
-- UI state is handled with React hooks in client components.
-
-## Contribution Ideas
-
-Possible improvements:
-
-- Add weekly/monthly reporting
-- Add food category filters
-- Add nutrition goals by meal type
-- Integrate external nutrition APIs
-
----
-
-Built with Next.js, TypeScript, and SQLite for fast local macro tracking.
+Personal use. Not open for contributions at this time.
