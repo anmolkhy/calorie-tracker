@@ -1,51 +1,95 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { handleApi } from '@/lib/api';
+import { validateQuantity } from '@/lib/validate';
 import { calculateMacros, sumMacros } from '@/lib/calculate';
+import type { DailyLog, LogEntryWithFood } from '@/types/db';
 
-type WeekEntryRow = {
-  quantity_grams: number;
-  calories_per_100g: number;
-  protein_per_100g: number;
-  carbs_per_100g: number;
-  fat_per_100g: number;
-};
+function getOrCreateDailyLog(userId: number, date: string): number {
+  const log = db.prepare(
+    'SELECT id FROM daily_logs WHERE user_id = ? AND date = ?'
+  ).get(userId, date) as { id: number } | undefined;
 
-export async function GET() {
+  if (!log) {
+    const result = db.prepare(
+      'INSERT INTO daily_logs (user_id, date) VALUES (?, ?)'
+    ).run(userId, date);
+    return result.lastInsertRowid as number;
+  }
+  return log.id;
+}
+
+export async function GET(req: NextRequest) {
   return handleApi(async () => {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const days: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get('date') ?? new Date().toISOString().split('T')[0];
+
+    const log = db.prepare(
+      'SELECT * FROM daily_logs WHERE user_id = ? AND date = ?'
+    ).get(session.id, date) as DailyLog | undefined;
+
+    if (!log) {
+      return NextResponse.json({
+        entries: [],
+        totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      });
     }
 
-    const week = days.map(date => {
-      const log = db.prepare(
-        'SELECT id FROM daily_logs WHERE user_id = ? AND date = ?'
-      ).get(session.id, date) as { id: number } | undefined;
+    const entries = db.prepare(`
+      SELECT le.*, f.name, f.calories_per_100g, f.protein_per_100g,
+             f.carbs_per_100g, f.fat_per_100g, m.name as meal_name
+      FROM log_entries le
+      JOIN foods f ON f.id = le.food_id
+      LEFT JOIN meals m ON m.id = le.meal_id
+      WHERE le.daily_log_id = ?
+      ORDER BY le.logged_at ASC
+    `).all(log.id) as LogEntryWithFood[];
 
-      if (!log) return { date, totals: { calories: 0, protein: 0, carbs: 0, fat: 0 } };
+    const entriesWithMacros = entries.map(entry => ({
+      ...entry,
+      macros: calculateMacros(
+        {
+          calories_per_100g: entry.calories_per_100g,
+          protein_per_100g: entry.protein_per_100g,
+          carbs_per_100g: entry.carbs_per_100g,
+          fat_per_100g: entry.fat_per_100g,
+        },
+        entry.quantity_grams
+      ),
+    }));
 
-      const entries = db.prepare(`
-        SELECT le.quantity_grams, f.calories_per_100g, f.protein_per_100g,
-               f.carbs_per_100g, f.fat_per_100g
-        FROM log_entries le
-        JOIN foods f ON f.id = le.food_id
-        WHERE le.daily_log_id = ?
-      `).all(log.id) as WeekEntryRow[];
+    const totals = sumMacros(entriesWithMacros.map(e => e.macros));
 
-      const totals = sumMacros(
-        entries.map(e => calculateMacros(e, e.quantity_grams))
-      );
+    return NextResponse.json({ entries: entriesWithMacros, totals });
+  });
+}
 
-      return { date, totals };
-    });
+export async function POST(req: NextRequest) {
+  return handleApi(async () => {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    return NextResponse.json({ week });
+    const body = await req.json();
+    const food_id = Number(body.food_id);
+    const quantity_grams = validateQuantity(body.quantity_grams);
+    const date = body.date ?? new Date().toISOString().split('T')[0];
+    const meal_id = body.meal_id ? Number(body.meal_id) : null;
+
+    if (!food_id) {
+      return NextResponse.json({ error: 'food_id is required' }, { status: 400 });
+    }
+
+    const dailyLogId = getOrCreateDailyLog(session.id, date);
+
+    db.prepare(`
+      INSERT INTO log_entries (daily_log_id, food_id, quantity_grams, meal_id)
+      VALUES (?, ?, ?, ?)
+    `).run(dailyLogId, food_id, quantity_grams, meal_id);
+
+    return NextResponse.json({ success: true }, { status: 201 });
   });
 }
