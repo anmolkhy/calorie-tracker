@@ -5,8 +5,6 @@ import { createToken, COOKIE_NAME } from '@/lib/auth';
 import { handleApi } from '@/lib/api';
 import { validateString } from '@/lib/validate';
 
-ensureDB();
-
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
     const body = await req.json();

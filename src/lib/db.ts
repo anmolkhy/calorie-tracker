@@ -10,4 +10,7 @@ export function ensureDB(): void {
   initialized = true;
 }
 
+// Auto-initialize when this module is first imported
+ensureDB();
+
 export default db;

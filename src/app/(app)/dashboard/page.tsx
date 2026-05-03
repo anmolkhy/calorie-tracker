@@ -66,8 +66,8 @@ export default function DashboardPage() {
     const res = await fetch(`/api/log?date=${date}`);
     if (res.ok) {
       const data = await res.json();
-      setEntries(data.entries);
-      setTotals(data.totals);
+      setEntries(data.entries ?? []);
+      setTotals(data.totals ?? EMPTY_MACROS);
     }
     setLoading(false);
   }, [date]);
@@ -92,10 +92,10 @@ export default function DashboardPage() {
   };
 
   const remaining = {
-    calories: goals.calories - totals.calories,
-    protein: goals.protein - totals.protein,
-    carbs: goals.carbs - totals.carbs,
-    fat: goals.fat - totals.fat,
+    calories: goals.calories - (totals?.calories ?? 0),
+    protein: goals.protein - (totals?.protein ?? 0),
+    carbs: goals.carbs - (totals?.carbs ?? 0),
+    fat: goals.fat - (totals?.fat ?? 0),
   };
 
   const caloriePercent = Math.min((totals.calories / goals.calories) * 100, 100);
