@@ -36,6 +36,7 @@ This app tracks **raw ingredients at their weighed quantities**. If you cook dal
 
 ## Project Structure
 
+<pre> ```text
 src/
 ├── app/
 │   ├── (auth)/          # Login, register pages
@@ -56,6 +57,7 @@ src/
 │   └── validate.ts      # Input validation
 └── types/
 └── db.ts            # TypeScript types for all DB entities
+``` </pre>
 
 ## Getting Started
 
