@@ -41,7 +41,11 @@ function displayDate(dateStr: string): string {
   const yesterday = formatDate(new Date(Date.now() - 86400000));
   if (dateStr === today) return 'Today';
   if (dateStr === yesterday) return 'Yesterday';
-  return new Date(dateStr).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  return new Date(dateStr).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export default function DashboardPage() {
@@ -126,9 +130,6 @@ export default function DashboardPage() {
         </button>
         <div className="text-center">
           <div className="text-base font-semibold">{displayDate(date)}</div>
-          <div className="mono text-xs" style={{ color: "var(--text-dim)" }}>
-            {date}
-          </div>
         </div>
         <button
           onClick={goToNext}

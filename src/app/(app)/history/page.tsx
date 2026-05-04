@@ -105,28 +105,47 @@ export default function HistoryPage() {
             const over = day.totals.calories > goals.calories;
 
             return (
-              <div key={day.date} className="flex-1 flex flex-col items-center gap-1.5">
-                <div className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
-                  {day.totals.calories > 0 ? Math.round(day.totals.calories) : ''}
+              <div
+                key={day.date}
+                className="flex-1 flex flex-col items-center gap-1.5"
+              >
+                <div
+                  className="mono text-xs"
+                  style={{ color: "var(--text-dim)" }}
+                >
+                  {day.totals.calories > 0
+                    ? Math.round(day.totals.calories)
+                    : ""}
                 </div>
-                <div className="w-full flex flex-col justify-end" style={{ height: '80px' }}>
+                <div
+                  className="w-full flex flex-col justify-end"
+                  style={{ height: "80px" }}
+                >
                   <div
                     className="w-full rounded-t-sm transition-all duration-500"
                     style={{
-                      height: `${Math.max(percent, day.totals.calories > 0 ? 4 : 0)}%`,
+                      height:
+                        day.totals.calories > 0
+                          ? `${Math.max(percent, 4)}%`
+                          : "3px",
                       background: over
-                        ? 'var(--red)'
+                        ? "var(--red)"
                         : isToday
-                        ? 'var(--accent)'
-                        : 'var(--surface-2)',
-                      border: isToday ? 'none' : `1px solid var(--border)`,
-                      minHeight: day.totals.calories > 0 ? '4px' : '0',
+                          ? "var(--accent)"
+                          : day.totals.calories > 0
+                            ? "var(--border-hover)"
+                            : "var(--surface-2)",
+                      border: `1px solid var(--border)`,
+                      minHeight: "3px",
+                      opacity: day.totals.calories > 0 ? 1 : 0.4,
                     }}
                   />
                 </div>
                 <div
                   className="mono text-xs"
-                  style={{ color: isToday ? 'var(--accent)' : 'var(--text-dim)' }}
+                  style={{
+                    color: isToday ? "var(--accent)" : "var(--text-dim)",
+                  }}
                 >
                   {formatShortDay(day.date)}
                 </div>
