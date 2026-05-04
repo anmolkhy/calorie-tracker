@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import db from '@/lib/db';
+import client from '@/lib/db';
 import { createToken, COOKIE_NAME } from '@/lib/auth';
 import { handleApi } from '@/lib/api';
 import { validateString } from '@/lib/validate';
-import type { User } from '@/types/db';
 
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
@@ -12,22 +11,31 @@ export async function POST(req: NextRequest) {
     const email = validateString(body.email, 'Email');
     const password = validateString(body.password, 'Password');
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined;
+    const result = await client.execute({
+      sql: 'SELECT * FROM users WHERE email = ?',
+      args: [email],
+    });
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const user = result.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash as string);
+
     if (!valid) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = await createToken({ id: user.id, email: user.email, name: user.name });
+    const token = await createToken({
+      id: Number(user.id),
+      email: user.email as string,
+      name: user.name as string,
+    });
 
     const response = NextResponse.json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: { id: Number(user.id), email: user.email, name: user.name },
     });
 
     response.cookies.set(COOKIE_NAME, token, {

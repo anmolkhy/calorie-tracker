@@ -1,30 +1,16 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { createClient } from '@libsql/client';
 
-// Global singleton to survive Next.js hot reload in dev
-const globalForDb = global as unknown as { db: Database.Database };
-
-function createDb(): Database.Database {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  const db = new Database(path.join(dataDir, 'calorie-tracker.db'));
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON'); // enforce FK constraints
-  return db;
+if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  throw new Error('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set');
 }
 
-const db = globalForDb.db ?? createDb();
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForDb.db = db;
-}
-
-export function initDB(): void {
-  db.exec(`
+export async function initDB(): Promise<void> {
+  await client.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -97,4 +83,4 @@ export function initDB(): void {
   `);
 }
 
-export default db;
+export default client;

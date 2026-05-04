@@ -1,16 +1,13 @@
-import db, { initDB } from '@/db/schema';
+import client, { initDB } from '@/db/schema';
 import { seedFoods } from '@/db/seed';
 
 let initialized = false;
 
-export function ensureDB(): void {
+export async function ensureDB(): Promise<void> {
   if (initialized) return;
-  initDB();
-  seedFoods();
+  await initDB();
+  await seedFoods();
   initialized = true;
 }
 
-// Auto-initialize when this module is first imported
-ensureDB();
-
-export default db;
+export default client;

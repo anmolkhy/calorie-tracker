@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import db, { ensureDB } from '@/lib/db';
+import client from '@/lib/db';
 import { createToken, COOKIE_NAME } from '@/lib/auth';
 import { handleApi } from '@/lib/api';
 import { validateString } from '@/lib/validate';
@@ -16,21 +16,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existing) {
+    const existing = await client.execute({
+      sql: 'SELECT id FROM users WHERE email = ?',
+      args: [email],
+    });
+
+    if (existing.rows.length > 0) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    const result = db.prepare(
-      'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
-    ).run(name, email, password_hash);
 
-    const userId = result.lastInsertRowid as number;
+    const result = await client.execute({
+      sql: 'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
+      args: [name, email, password_hash],
+    });
 
-    db.prepare(
-      `INSERT INTO user_goals (user_id, calories, protein, carbs, fat) VALUES (?, 2000, 150, 200, 65)`
-    ).run(userId);
+    const userId = Number(result.lastInsertRowid);
+
+    await client.execute({
+      sql: 'INSERT INTO user_goals (user_id, calories, protein, carbs, fat) VALUES (?, 2000, 150, 200, 65)',
+      args: [userId],
+    });
 
     const token = await createToken({ id: userId, email, name });
 
