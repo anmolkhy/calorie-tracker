@@ -12,15 +12,15 @@ export default function MacroBar({ label, consumed, goal, color, unit = 'g' }: P
   const over = consumed > goal;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between items-baseline">
+    <div className="flex flex-col gap-1">
+      <div className="flex justify-between items-baseline gap-1">
         <span
-          className="text-xs uppercase tracking-wider"
+          className="text-xs uppercase tracking-wider shrink-0"
           style={{ color: 'var(--text-muted)' }}
         >
           {label}
         </span>
-        <span className="mono text-xs font-medium" style={{ color }}>
+        <span className="mono text-xs font-medium shrink-0" style={{ color }}>
           {consumed.toFixed(1)}{unit}
         </span>
       </div>
@@ -35,16 +35,11 @@ export default function MacroBar({ label, consumed, goal, color, unit = 'g' }: P
         />
       </div>
 
-      <div className="flex justify-between">
-        <span className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
-          {over
-            ? <span style={{ color: 'var(--red)' }}>+{(consumed - goal).toFixed(1)}{unit} over</span>
-            : <span>{remaining.toFixed(1)}{unit} left</span>
-          }
-        </span>
-        <span className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
-          {Math.round(percent)}%
-        </span>
+      <div className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
+        {over
+          ? <span style={{ color: 'var(--red)' }}>+{(consumed - goal).toFixed(1)}{unit} over</span>
+          : <span>{remaining.toFixed(1)}{unit} left</span>
+        }
       </div>
     </div>
   );

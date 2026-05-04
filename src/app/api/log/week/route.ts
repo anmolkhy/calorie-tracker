@@ -18,9 +18,11 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const days: string[] = [];
+    const today = new Date();
+    today.setHours(12, 0, 0, 0); // pin to noon to avoid timezone edge cases
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
       days.push(d.toISOString().split('T')[0]);
     }
 
