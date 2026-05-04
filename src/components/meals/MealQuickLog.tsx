@@ -133,7 +133,7 @@ export default function MealQuickLog({ date, onLogged, onClose }: Props) {
                     onClick={() => handleLogMeal(meal.id)}
                     disabled={logging === meal.id}
                     className="btn btn-primary btn-sm shrink-0"
-                    style={{ minWidth: "60px" }}
+                    style={{ minWidth: "64px" }}
                   >
                     {logging === meal.id ? "..." : "+ Log"}
                   </button>
@@ -156,15 +156,15 @@ export default function MealQuickLog({ date, onLogged, onClose }: Props) {
                       return (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-4 py-2.5"
+                          className="flex items-center justify-between px-4 py-2.5 gap-3"
                           style={{
                             borderTop:
                               i > 0 ? "1px solid var(--border)" : "none",
                             background: "var(--surface)",
                           }}
                         >
-                          <div>
-                            <div className="text-xs font-medium">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium truncate">
                               {item.name}
                             </div>
                             <div
@@ -175,7 +175,7 @@ export default function MealQuickLog({ date, onLogged, onClose }: Props) {
                             </div>
                           </div>
                           <div
-                            className="mono text-xs text-right"
+                            className="mono text-xs shrink-0"
                             style={{ color: "var(--text-dim)" }}
                           >
                             <span style={{ color: "var(--calories)" }}>

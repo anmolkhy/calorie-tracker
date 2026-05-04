@@ -30,7 +30,11 @@ export default function FoodSearch({ date, onLogged, onClose }: Props) {
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (searchRef.current) clearTimeout(searchRef.current);
+    if (!searchRef.current) clearTimeout(searchRef.current);
+    if (query.trim().length === 0) {
+      setFoods([]);
+      return;
+    }
     searchRef.current = setTimeout(async () => {
       const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
       if (res.ok) {

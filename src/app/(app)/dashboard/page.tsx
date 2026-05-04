@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import MacroBar from '@/components/ui/MacroBar';
+import Button from '@/components/ui/Button';
 import FoodSearch from '@/components/log/FoodSearch';
 import LogEntryRow from '@/components/log/LogEntryRow';
 import MealQuickLog from '@/components/meals/MealQuickLog';
@@ -118,49 +119,71 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6 fade-up">
-
       {/* Date navigator */}
       <div className="flex items-center justify-between">
-        <button onClick={goToPrev} className="btn btn-ghost btn-sm">←</button>
+        <button onClick={goToPrev} className="btn btn-ghost btn-sm">
+          ←
+        </button>
         <div className="text-center">
           <div className="text-base font-semibold">{displayDate(date)}</div>
-          <div className="mono text-xs" style={{ color: 'var(--text-dim)' }}>{date}</div>
+          <div className="mono text-xs" style={{ color: "var(--text-dim)" }}>
+            {date}
+          </div>
         </div>
         <button
           onClick={goToNext}
           disabled={isToday}
           className="btn btn-ghost btn-sm"
           style={{ opacity: isToday ? 0.3 : 1 }}
-        >→</button>
+        >
+          →
+        </button>
       </div>
 
       {/* Calorie summary card */}
       <div className="card">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <div className="text-xs uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+            <div
+              className="text-xs uppercase tracking-widest mb-1"
+              style={{ color: "var(--text-muted)" }}
+            >
               Calories
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="mono text-4xl font-medium" style={{ color: 'var(--accent)' }}>
+              <span
+                className="mono text-4xl font-medium"
+                style={{ color: "var(--accent)" }}
+              >
                 {Math.round(totals.calories)}
               </span>
-              <span className="mono text-sm" style={{ color: 'var(--text-dim)' }}>
+              <span
+                className="mono text-sm"
+                style={{ color: "var(--text-dim)" }}
+              >
                 / {goals.calories} kcal
               </span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xs uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+            <div
+              className="text-xs uppercase tracking-widest mb-1"
+              style={{ color: "var(--text-muted)" }}
+            >
               Remaining
             </div>
             <div
               className="mono text-2xl font-medium"
-              style={{ color: remaining.calories < 0 ? 'var(--red)' : 'var(--text)' }}
+              style={{
+                color: remaining.calories < 0 ? "var(--red)" : "var(--text)",
+              }}
             >
               {Math.round(Math.abs(remaining.calories))}
-              <span className="text-sm ml-1" style={{ color: 'var(--text-dim)' }}>
-                {remaining.calories < 0 ? 'over' : 'left'}
+              <span
+                className="text-sm ml-1"
+                style={{ color: "var(--text-dim)" }}
+              >
+                {remaining.calories < 0 ? "over" : "left"}
               </span>
             </div>
           </div>
@@ -172,33 +195,57 @@ export default function DashboardPage() {
             className="macro-fill"
             style={{
               width: `${caloriePercent}%`,
-              background: caloriePercent >= 100 ? 'var(--red)' : 'var(--accent)',
+              background:
+                caloriePercent >= 100 ? "var(--red)" : "var(--accent)",
             }}
           />
         </div>
 
         {/* Macro bars */}
         <div className="grid grid-cols-3 gap-4">
-          <MacroBar label="Protein" consumed={totals.protein} goal={goals.protein} color="var(--protein)" />
-          <MacroBar label="Carbs" consumed={totals.carbs} goal={goals.carbs} color="var(--carbs)" />
-          <MacroBar label="Fat" consumed={totals.fat} goal={goals.fat} color="var(--fat)" />
+          <MacroBar
+            label="Protein"
+            consumed={totals.protein}
+            goal={goals.protein}
+            color="var(--protein)"
+          />
+          <MacroBar
+            label="Carbs"
+            consumed={totals.carbs}
+            goal={goals.carbs}
+            color="var(--carbs)"
+          />
+          <MacroBar
+            label="Fat"
+            consumed={totals.fat}
+            goal={goals.fat}
+            color="var(--fat)"
+          />
         </div>
       </div>
 
       {/* Quick log actions */}
       <div className="flex gap-3">
-        <button
-          onClick={() => { setShowFoodSearch(true); setShowMeals(false); }}
-          className="btn btn-primary flex-1"
+        <Button
+          onClick={() => {
+            setShowFoodSearch((s) => !s);
+            setShowMeals(false);
+          }}
+          fullWidth
+          className="flex-1"
         >
           + Log Food
-        </button>
-        <button
-          onClick={() => { setShowMeals(true); setShowFoodSearch(false); }}
-          className="btn btn-ghost flex-1"
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setShowMeals((s) => !s);
+            setShowFoodSearch(false);
+          }}
+          className="flex-1"
         >
           ◈ Log Meal
-        </button>
+        </Button>
       </div>
 
       {/* Food search panel */}
@@ -222,31 +269,39 @@ export default function DashboardPage() {
       {/* Log entries */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+          <span
+            className="text-xs uppercase tracking-widest"
+            style={{ color: "var(--text-muted)" }}
+          >
             Today's Log
           </span>
-          <span className="mono text-xs" style={{ color: 'var(--text-dim)' }}>
-            {entries.length} {entries.length === 1 ? 'item' : 'items'}
+          <span className="mono text-xs" style={{ color: "var(--text-dim)" }}>
+            {entries.length} {entries.length === 1 ? "item" : "items"}
           </span>
         </div>
 
         {loading ? (
-          <div className="text-center py-8" style={{ color: 'var(--text-dim)' }}>
+          <div
+            className="text-center py-8"
+            style={{ color: "var(--text-dim)" }}
+          >
             <span className="mono text-sm">Loading...</span>
           </div>
         ) : entries.length === 0 ? (
           <div
             className="rounded-xl py-10 text-center"
-            style={{ border: '1px dashed var(--border)' }}
+            style={{ border: "1px dashed var(--border)" }}
           >
             <div className="text-2xl mb-2">◎</div>
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Nothing logged yet</div>
-            <div className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
+            <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Nothing logged yet
+            </div>
+            <div className="text-xs mt-1" style={{ color: "var(--text-dim)" }}>
               Tap "Log Food" to get started
             </div>
           </div>
         ) : (
-          entries.map(entry => (
+          entries.map((entry) => (
             <LogEntryRow
               key={entry.id}
               entry={entry}
@@ -255,32 +310,6 @@ export default function DashboardPage() {
           ))
         )}
       </div>
-
-      {/* Daily macro summary at bottom if entries exist */}
-      {entries.length > 0 && (
-        <div
-          className="card mono text-xs"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <div className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
-            Summary
-          </div>
-          <div className="grid grid-cols-4 gap-4 text-center">
-            {[
-              { label: 'Calories', value: Math.round(totals.calories), unit: 'kcal', color: 'var(--calories)' },
-              { label: 'Protein', value: totals.protein.toFixed(1), unit: 'g', color: 'var(--protein)' },
-              { label: 'Carbs', value: totals.carbs.toFixed(1), unit: 'g', color: 'var(--carbs)' },
-              { label: 'Fat', value: totals.fat.toFixed(1), unit: 'g', color: 'var(--fat)' },
-            ].map(item => (
-              <div key={item.label}>
-                <div className="text-lg font-medium" style={{ color: item.color }}>{item.value}</div>
-                <div className="text-xs" style={{ color: 'var(--text-dim)' }}>{item.unit}</div>
-                <div className="text-xs mt-0.5 uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
