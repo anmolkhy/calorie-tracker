@@ -27,7 +27,7 @@ interface LogEntry {
   meal_name: string | null;
   macros: EntryMacros;
 }
-
+//CI/CD test comment - do not delete
 const EMPTY_MACROS: MacroTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
 const DEFAULT_GOALS: Goals = { calories: 2000, protein: 150, carbs: 200, fat: 65 };
