@@ -43,7 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      refresh();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, refresh }}>

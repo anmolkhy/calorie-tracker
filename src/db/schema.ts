@@ -75,12 +75,26 @@ export async function initDB(): Promise<void> {
       food_id INTEGER NOT NULL,
       quantity_grams REAL NOT NULL,
       meal_id INTEGER,
+      note TEXT,
       logged_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (daily_log_id) REFERENCES daily_logs(id) ON DELETE CASCADE,
       FOREIGN KEY (food_id) REFERENCES foods(id),
       FOREIGN KEY (meal_id) REFERENCES meals(id)
     );
   `);
+
+  const columns = await client.execute('PRAGMA table_info(log_entries)');
+  const hasNote = columns.rows.some(column => column.name === 'note');
+  if (!hasNote) {
+    await client.execute('ALTER TABLE log_entries ADD COLUMN note TEXT');
+  }
+
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO foods
+            (id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, category, is_custom, created_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [-1, 'Quick Log', 100, 0, 0, 0, 'system', 0, null],
+  });
 }
 
 export default client;

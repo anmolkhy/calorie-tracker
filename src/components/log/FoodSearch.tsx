@@ -32,8 +32,12 @@ export default function FoodSearch({ date, onLogged, onClose }: Props) {
   useEffect(() => {
     if (searchRef.current) clearTimeout(searchRef.current);
     if (query.trim().length === 0) {
-      setFoods([]);
-      return;
+      searchRef.current = setTimeout(() => {
+        setFoods([]);
+      }, 0);
+      return () => {
+        if (searchRef.current) clearTimeout(searchRef.current);
+      };
     }
     searchRef.current = setTimeout(async () => {
       const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
@@ -181,7 +185,7 @@ export default function FoodSearch({ date, onLogged, onClose }: Props) {
 
       {!selected && foods.length === 0 && query.length > 0 && (
         <div className="text-center py-4" style={{ color: 'var(--text-dim)' }}>
-          <div className="text-sm">No foods found for "{query}"</div>
+          <div className="text-sm">No foods found for {query}</div>
           <div className="text-xs mt-1">Try a different name or add a custom food in the Foods tab</div>
         </div>
       )}
