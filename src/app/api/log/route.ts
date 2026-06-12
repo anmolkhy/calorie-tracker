@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         entries: [],
         totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        untrackedCalories: 0,
       });
     }
 
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     const entries = await client.execute({
       sql: `SELECT le.*, f.name, f.calories_per_100g, f.protein_per_100g,
-                   f.carbs_per_100g, f.fat_per_100g, m.name as meal_name
+                   f.carbs_per_100g, f.fat_per_100g, f.category, m.name as meal_name
             FROM log_entries le
             JOIN foods f ON f.id = le.food_id
             LEFT JOIN meals m ON m.id = le.meal_id
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest) {
 
     const entriesWithMacros = entries.rows.map(entry => ({
       ...entry,
+      is_quick_log: entry.category === 'system',
       macros: calculateMacros(
         {
           calories_per_100g: Number(entry.calories_per_100g),
@@ -67,7 +69,11 @@ export async function GET(req: NextRequest) {
     }));
 
     const totals = sumMacros(entriesWithMacros.map(e => e.macros));
-    return NextResponse.json({ entries: entriesWithMacros, totals });
+    const untrackedCalories = entriesWithMacros
+      .filter(entry => entry.is_quick_log)
+      .reduce((sum, entry) => sum + entry.macros.calories, 0);
+
+    return NextResponse.json({ entries: entriesWithMacros, totals, untrackedCalories });
   });
 }
 

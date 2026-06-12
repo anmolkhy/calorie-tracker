@@ -62,6 +62,7 @@ export interface LogEntry {
   food_id: number;
   quantity_grams: number;
   meal_id: number | null;
+  note: string | null;
   logged_at: string;
   // joined fields
   name?: string;

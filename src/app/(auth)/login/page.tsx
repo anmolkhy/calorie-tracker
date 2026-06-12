@@ -72,7 +72,7 @@ export default function LoginPage() {
 
         <div className="divider my-6">or</div>
         <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-          Don't have an account?{' '}
+          Do not have an account?{' '}
           <Link href="/register" className="font-medium hover:underline" style={{ color: 'var(--accent)' }}>
             Create one
           </Link>

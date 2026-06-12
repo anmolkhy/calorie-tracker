@@ -10,6 +10,46 @@ interface Goals {
   fat: number;
 }
 
+interface ChartInstance {
+  destroy: () => void;
+}
+
+interface ChartCanvas extends HTMLCanvasElement {
+  _chartInstance?: ChartInstance;
+}
+
+interface ChartConstructor {
+  new (
+    element: HTMLCanvasElement,
+    config: {
+      type: "doughnut";
+      data: {
+        datasets: {
+          data: number[];
+          backgroundColor: string[];
+          borderWidth: number;
+          hoverOffset: number;
+        }[];
+      };
+      options: {
+        responsive: boolean;
+        cutout: string;
+        plugins: {
+          legend: { display: boolean };
+          tooltip: { enabled: boolean };
+        };
+        animation: { duration: number };
+      };
+    },
+  ): ChartInstance;
+}
+
+declare global {
+  interface Window {
+    Chart?: ChartConstructor;
+  }
+}
+
 export default function SettingsPage() {
   const [goals, setGoals] = useState<Goals>({
     calories: 2000,
@@ -241,11 +281,12 @@ export default function SettingsPage() {
                   key={chartKey}
                   ref={(el) => {
                     if (!el) return;
-                    const existing = (el as any)._chartInstance;
+                    const chartCanvas = el as ChartCanvas;
+                    const existing = chartCanvas._chartInstance;
                     if (existing) existing.destroy();
-                    const Chart = (window as any).Chart;
+                    const Chart = window.Chart;
                     if (!Chart) return;
-                    (el as any)._chartInstance = new Chart(el, {
+                    chartCanvas._chartInstance = new Chart(el, {
                       type: "doughnut",
                       data: {
                         datasets: [

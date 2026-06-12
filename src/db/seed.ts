@@ -64,7 +64,7 @@ const foods = [
 
 export async function seedFoods(): Promise<void> {
   const result = await client.execute(
-    'SELECT COUNT(*) as count FROM foods WHERE is_custom = 0'
+    "SELECT COUNT(*) as count FROM foods WHERE is_custom = 0 AND category <> 'system'"
   );
   const count = result.rows[0].count as number;
   if (count > 0) {
