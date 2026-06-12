@@ -16,14 +16,19 @@ export async function GET(req: NextRequest) {
     if (query.length > 0) {
       result = await client.execute({
         sql: `SELECT * FROM foods
-              WHERE (is_custom = 0 AND name LIKE ?)
+              WHERE category <> 'system'
+                AND ((is_custom = 0 AND name LIKE ?)
                  OR (is_custom = 1 AND created_by = ? AND name LIKE ?)
+                )
               ORDER BY is_custom ASC, name ASC`,
         args: [`%${query}%`, session.id, `%${query}%`],
       });
     } else {
       result = await client.execute({
-        sql: 'SELECT * FROM foods WHERE is_custom = 0 OR (is_custom = 1 AND created_by = ?) ORDER BY category ASC, name ASC',
+        sql: `SELECT * FROM foods
+              WHERE category <> 'system'
+                AND (is_custom = 0 OR (is_custom = 1 AND created_by = ?))
+              ORDER BY category ASC, name ASC`,
         args: [session.id],
       });
     }

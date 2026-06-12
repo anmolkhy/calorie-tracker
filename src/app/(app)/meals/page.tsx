@@ -61,10 +61,20 @@ export default function MealsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchMeals(); }, [fetchMeals]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchMeals();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchMeals]);
 
   useEffect(() => {
-    if (!foodQuery.trim()) { setFoodResults([]); return; }
+    if (!foodQuery.trim()) {
+      const timer = setTimeout(() => {
+        setFoodResults([]);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
     const t = setTimeout(async () => {
       const res = await fetch(`/api/foods?q=${encodeURIComponent(foodQuery)}`);
       if (res.ok) {

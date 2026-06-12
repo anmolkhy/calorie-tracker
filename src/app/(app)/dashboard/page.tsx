@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/lib/AuthContext';
 import MacroBar from '@/components/ui/MacroBar';
 import Button from '@/components/ui/Button';
 import FoodSearch from '@/components/log/FoodSearch';
+import QuickLog from '@/components/log/QuickLog';
 import LogEntryRow from '@/components/log/LogEntryRow';
 import MealQuickLog from '@/components/meals/MealQuickLog';
 
@@ -14,9 +14,8 @@ interface MacroTotals {
   fat: number;
 }
 
-interface Goals extends MacroTotals {}
-
-interface EntryMacros extends MacroTotals {}
+type Goals = MacroTotals;
+type EntryMacros = MacroTotals;
 
 interface LogEntry {
   id: number;
@@ -25,6 +24,8 @@ interface LogEntry {
   quantity_grams: number;
   meal_id: number | null;
   meal_name: string | null;
+  note: string | null;
+  is_quick_log: boolean;
   macros: EntryMacros;
 }
 
@@ -49,13 +50,14 @@ function displayDate(dateStr: string): string {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const [date, setDate] = useState(formatDate(new Date()));
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [totals, setTotals] = useState<MacroTotals>(EMPTY_MACROS);
+  const [untrackedCalories, setUntrackedCalories] = useState(0);
   const [goals, setGoals] = useState<Goals>(DEFAULT_GOALS);
   const [loading, setLoading] = useState(true);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [showQuickLog, setShowQuickLog] = useState(false);
   const [showMeals, setShowMeals] = useState(false);
 
   const fetchGoals = useCallback(async () => {
@@ -73,16 +75,23 @@ export default function DashboardPage() {
       const data = await res.json();
       setEntries(data.entries ?? []);
       setTotals(data.totals ?? EMPTY_MACROS);
+      setUntrackedCalories(data.untrackedCalories ?? 0);
     }
     setLoading(false);
   }, [date]);
 
   useEffect(() => {
-    fetchGoals();
+    const timer = setTimeout(() => {
+      fetchGoals();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchGoals]);
 
   useEffect(() => {
-    fetchLog();
+    const timer = setTimeout(() => {
+      fetchLog();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchLog]);
 
   const handleDelete = async (id: number) => {
@@ -92,6 +101,7 @@ export default function DashboardPage() {
 
   const handleLogged = () => {
     setShowFoodSearch(false);
+    setShowQuickLog(false);
     setShowMeals(false);
     fetchLog();
   };
@@ -223,29 +233,47 @@ export default function DashboardPage() {
             color="var(--fat)"
           />
         </div>
+
+        {untrackedCalories > 0 && (
+          <div className="mono text-xs mt-4" style={{ color: "var(--text-dim)" }}>
+            {Math.round(untrackedCalories)} kcal not macro-tracked
+          </div>
+        )}
       </div>
 
       {/* Quick log actions */}
-      <div className="flex gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Button
           onClick={() => {
             setShowFoodSearch((s) => !s);
+            setShowQuickLog(false);
             setShowMeals(false);
           }}
           fullWidth
-          className="flex-1"
         >
-          + Log Food
+          Log Food
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setShowQuickLog((s) => !s);
+            setShowFoodSearch(false);
+            setShowMeals(false);
+          }}
+          fullWidth
+        >
+          Quick Log
         </Button>
         <Button
           variant="ghost"
           onClick={() => {
             setShowMeals((s) => !s);
             setShowFoodSearch(false);
+            setShowQuickLog(false);
           }}
-          className="flex-1"
+          fullWidth
         >
-          ◈ Log Meal
+          Log Meal
         </Button>
       </div>
 
@@ -255,6 +283,15 @@ export default function DashboardPage() {
           date={date}
           onLogged={handleLogged}
           onClose={() => setShowFoodSearch(false)}
+        />
+      )}
+
+      {/* Quick log panel */}
+      {showQuickLog && (
+        <QuickLog
+          date={date}
+          onLogged={handleLogged}
+          onClose={() => setShowQuickLog(false)}
         />
       )}
 
@@ -274,7 +311,7 @@ export default function DashboardPage() {
             className="text-xs uppercase tracking-widest"
             style={{ color: "var(--text-muted)" }}
           >
-            Today's Log
+            Daily Log
           </span>
           <span className="mono text-xs" style={{ color: "var(--text-dim)" }}>
             {entries.length} {entries.length === 1 ? "item" : "items"}
@@ -298,7 +335,7 @@ export default function DashboardPage() {
               Nothing logged yet
             </div>
             <div className="text-xs mt-1" style={{ color: "var(--text-dim)" }}>
-              Tap "Log Food" to get started
+              Tap Log Food to get started
             </div>
           </div>
         ) : (

@@ -14,6 +14,8 @@ interface LogEntry {
   quantity_grams: number;
   meal_id: number | null;
   meal_name: string | null;
+  note: string | null;
+  is_quick_log: boolean;
   macros: EntryMacros;
 }
 
@@ -24,6 +26,7 @@ interface Props {
 
 export default function LogEntryRow({ entry, onDelete }: Props) {
   const [deleting, setDeleting] = useState(false);
+  const displayName = entry.is_quick_log && entry.note ? entry.note : entry.name;
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -41,7 +44,7 @@ export default function LogEntryRow({ entry, onDelete }: Props) {
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium truncate">{entry.name}</span>
+          <span className="text-sm font-medium truncate">{displayName}</span>
           {entry.meal_name && (
             <span
               className="text-xs px-1.5 py-0.5 rounded mono shrink-0"
@@ -52,14 +55,24 @@ export default function LogEntryRow({ entry, onDelete }: Props) {
           )}
         </div>
         <div className="mono text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
-          {entry.quantity_grams}g ·{' '}
-          <span style={{ color: 'var(--calories)' }}>{Math.round(entry.macros.calories)} kcal</span>
-          {' · '}
-          <span style={{ color: 'var(--protein)' }}>{entry.macros.protein.toFixed(1)}g P</span>
-          {' · '}
-          <span style={{ color: 'var(--carbs)' }}>{entry.macros.carbs.toFixed(1)}g C</span>
-          {' · '}
-          <span style={{ color: 'var(--fat)' }}>{entry.macros.fat.toFixed(1)}g F</span>
+          {entry.is_quick_log ? (
+            <span style={{ color: 'var(--calories)' }}>
+              {Math.round(entry.macros.calories)} kcal
+            </span>
+          ) : (
+            <>
+              {entry.quantity_grams}g ·{' '}
+              <span style={{ color: 'var(--calories)' }}>
+                {Math.round(entry.macros.calories)} kcal
+              </span>
+              {' · '}
+              <span style={{ color: 'var(--protein)' }}>{entry.macros.protein.toFixed(1)}g P</span>
+              {' · '}
+              <span style={{ color: 'var(--carbs)' }}>{entry.macros.carbs.toFixed(1)}g C</span>
+              {' · '}
+              <span style={{ color: 'var(--fat)' }}>{entry.macros.fat.toFixed(1)}g F</span>
+            </>
+          )}
         </div>
       </div>
 
