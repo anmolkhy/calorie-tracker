@@ -205,3 +205,19 @@ fix/[name]      — hotfix branch from main
 | `specs/*.md` | Individual feature specs |
 | `CHANGELOG.md` | User-facing release notes |
 | `README.md` | Project overview and setup |
+
+---
+
+## Architecture Decision Records
+
+Key decisions are documented in `/adr/`. Read the relevant ADR before working on any area it covers.
+
+| ADR | Decision | Read before |
+|---|---|---|
+| `001-turso-over-postgresql.md` | Why Turso, not Postgres | Any DB work |
+| `002-jwt-cookies-over-nextauth.md` | Why custom JWT, not NextAuth | Any auth work |
+| `003-raw-weight-tracking-philosophy.md` | Why raw weights, not prepared dishes | Food DB, logging |
+| `004-no-auto-macro-adjustment.md` | Why goals don't auto-adjust | Settings page |
+| `005-prompt-generator-over-embedded-ai.md` | Why no embedded AI for meal planning | Feature 003 |
+| `006-data-informs-never-judges.md` | Why no moral UI language | Any UI work |
+| `007-nextjs16-tailwind-v4-stack.md` | Critical framework gotchas | Any code work — READ THIS FIRST |
