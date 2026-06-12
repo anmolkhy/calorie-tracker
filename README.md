@@ -18,7 +18,7 @@ This app tracks **raw ingredients at their weighed quantities**. If you cook dal
 - **Fixed meal templates** — create reusable meals (e.g. "Oats Breakfast") and log everything in one click
 - **Live macro calculation** — calories, protein, carbs, fat consumed vs. remaining, updates instantly
 - **7-day history** — bar chart and daily breakdown with goal tracking
-- **Curated food database** — ~60 foods with macros verified from product labels (Atom Whey, ID Fresh High Protein Low Fat Paneer, Licious Chicken Curry Cut, Quaker Oats, Superyou Protein Wafers, Amul Butter) and USDA/IFCT data
+- **Curated food database** — ~60 foods with macros verified from product labels and USDA/IFCT data
 - **Custom foods** — add any food with your own label data
 - **Daily goals** — set calorie and macro targets with a visual macro split donut chart
 - **Multi-user** — each user has their own isolated data, goals, and meal templates
